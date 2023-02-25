@@ -8,7 +8,7 @@ import pandas as pd
 
 from datetime import datetime
 from itertools import permutations
-from typing import Type 
+from pprint import pprint 
 
 # EA libraries 
 from deap import base, creator, tools, algorithms
@@ -32,10 +32,10 @@ def generate_data(size: int = 20):
 # EA functions using DEAP 
 
 def tsp_solver(locations: list, population_size: int=100, num_generations: int=1000, cxpb: float =0.5, mutpb: float =0.2):
-    """
-    Solves the TSP problem using a genetic algorithm. Uses OOTB algorithms from the DEAP package. 
+    """ Solves the TSP problem using a genetic algorithm. Uses OOTB algorithms from the DEAP package. 
 
     INPUTS
+    ----------
     locations
         This is a list of (lat, long) coordinates that represent the locations that the driver must visit.
 
@@ -68,7 +68,8 @@ def tsp_solver(locations: list, population_size: int=100, num_generations: int=1
         In general, a good starting value for mutpb is 0.2, but you may need to experiment with different values to find the optimal value for your problem.
 
     
-    OUTPUTS 
+    OUTPUTS
+    ----------
     pop
         This is the final population of individuals that resulted from running the genetic algorithm. 
         It is a list of individuals, where each individual is a list of integers representing a candidate solution for the TSP problem. The length of the population is determined by the population_size parameter.
@@ -202,8 +203,11 @@ best_individual = hof[0]
 best_fitness = best_individual.fitness.values[0]
 best_sequence = get_best_sequence(best_individual, locations)
 
+
 # Viz & export 
 plot_evolution(logbook)
+print("The best sequence is:")
+pprint(best_sequence)
 export_csv(best_sequence)
 
 
