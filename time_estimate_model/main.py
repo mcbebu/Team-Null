@@ -65,7 +65,6 @@ def main():
     print('r2 score', r2_score(y[train_len:], clf.predict(X[train_len:])))
 
 
-
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     knn_regressor_a_b_lat_long_estimated_time_lookup_table()
