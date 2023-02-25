@@ -6,10 +6,33 @@
 from sklearn.ensemble import RandomForestRegressor
 import pandas as pd
 from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.neighbors import KNeighborsRegressor
 
 
 # input hourly time format: "2022-11-02T00:00"
 # output rain format (mm): 0.2
+
+
+# input: source_longitude, source_latitude, destination_longitude, destination_latitude
+# output: estimated time to travel from source to destination
+def knn_regressor_a_b_lat_long_estimated_time_lookup_table():
+    df = pd.read_csv('route_working_mapping.csv')
+    X_str = df[['source_destination']].values
+    # print(X_str[:10])
+
+    # split source_destination into four columns
+    # source_longitude, source_latitude, destination_longitude, destination_latitude
+    X = [ x_one_str[0].replace(';', ',').split(',') for x_one_str in X_str]
+    X = [[float(num) for num in row] for row in X]
+    print(X[:10])
+
+    y = df['time_diff'].values
+    neigh = KNeighborsRegressor(n_neighbors=5)
+    neigh.fit(X, y)
+
+    print('gt', y[0])
+    print('prediction', neigh.predict([[1.386478068, 103.7602565, 1.387284982, 103.7590052]]))
+
 
 def weather_lookup_table(hourly_time):
     df = pd.read_csv('time_rain.csv').values
@@ -23,7 +46,8 @@ def main():
     X_str = df[['source_destination']].values
     # print(X_str[:10])
 
-    # TODO split source_destination into four columns, source_longitude, source_latitude,
+    # split source_destination into four columns:
+    # source_longitude, source_latitude, destination_longitude, destination_latitude
     X = [ x_one_str[0].replace(';', ',').split(',') for x_one_str in X_str]
     # print(X[:10])
 
@@ -44,6 +68,6 @@ def main():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    weather_lookup_table()
+    knn_regressor_a_b_lat_long_estimated_time_lookup_table()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
