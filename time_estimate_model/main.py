@@ -7,6 +7,16 @@ from sklearn.ensemble import RandomForestRegressor
 import pandas as pd
 from sklearn.metrics import mean_squared_error, r2_score
 
+
+# input hourly time format: "2022-11-02T00:00"
+# output rain format (mm): 0.2
+
+def weather_lookup_table(hourly_time):
+    df = pd.read_csv('time_rain.csv').values
+    hour_rain_dic = dict(df)
+    rain_volumn = hour_rain_dic[hourly_time]
+
+
 def main():
 
     df = pd.read_csv('route_working_mapping.csv')
@@ -29,11 +39,11 @@ def main():
     print('prediction', clf.predict([X[0]]))
     print('mean squared error', mean_squared_error(y[train_len:], clf.predict(X[train_len:])))
     print('r2 score', r2_score(y[train_len:], clf.predict(X[train_len:])))
-    
+
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    main()
+    weather_lookup_table()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
