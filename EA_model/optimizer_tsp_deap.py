@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import pandas as pd 
-
+from query_model import query_model
 
 from datetime import datetime
 from itertools import permutations
@@ -13,8 +13,14 @@ from pprint import pprint
 # EA libraries 
 from deap import base, creator, tools, algorithms
 
+# cache function
+from functools import lru_cache
+# import warnings
+# from sklearn.exceptions import UserWarning
+# warnings.filterwarnings("ignore", category=UserWarning)
 # -----------------------------------
 # Generate synthetic data
+
 def generate_data(size: int = 20): 
     points = [[random.randint(0, 50), random.randint(0, 50)] for i in range(size)]
     
@@ -26,10 +32,48 @@ def generate_data(size: int = 20):
         # print(pair[0], pair[1])
     return points, lookup
 
-
+def get_data():
+    df = pd.read_csv('location.csv')
+    df = df.assign(lat=df.location.str.split(',').str[0])
+    df = df.assign(long=df.location.str.split(',').str[1])
+    df = df.drop(columns=['location'])
+    # return list
+    data = df.values.tolist()
+    return data
 
 # -----------------------------------
 # EA functions using DEAP 
+import math
+import requests
+import json
+key = "AIzaSyBN9wjKeVnXXeMK3dtVWFgFYjGfL18MyyA"
+
+
+@lru_cache(maxsize=2048)
+def get_google_duration(lat1, lon1, lat2, lon2):
+    direction_url = "https://maps.googleapis.com/maps/api/directions/json?origin={},{}&destination={},{}&mode=driving&key={}"
+    response = requests.get(direction_url.format(lat1, lon1, lat2, lon2, key))
+    result_json_obj = json.loads(response.text)
+    dur = result_json_obj['routes'][0]['legs'][0]['duration']['value']
+    
+    return float(dur)
+
+def distance(lat1, lon1, lat2, lon2):
+    # lat_long = str(lat_long)
+    # source, dest = lat_long.split(';')
+    # lat1, lon1 = source.split(',')
+    # lat2, lon2 = dest.split(',')
+    lat1, lon1, lat2, lon2 = float(lat1), float(lon1), float(lat2), float(lon2)
+    R = 6371  # radius of the earth in km
+    dLat = math.radians(lat2 - lat1)
+    dLon = math.radians(lon2 - lon1)
+    a = math.sin(dLat / 2) * math.sin(dLat / 2) + math.cos(math.radians(lat1)) \
+        * math.cos(math.radians(lat2)) * math.sin(dLon / 2) * math.sin(dLon / 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distance = R * c
+    return float(distance)
+
+
 
 def tsp_solver(locations: list, population_size: int=100, num_generations: int=1000, cxpb: float =0.5, mutpb: float =0.2):
     """ Solves the TSP problem using a genetic algorithm. Uses OOTB algorithms from the DEAP package. 
@@ -91,18 +135,42 @@ def tsp_solver(locations: list, population_size: int=100, num_generations: int=1
     num_locations = len(locations)
 
     # Define the fintess function
-    def point_to_point_time(start_point: list[float, float], end_point: list[float, float], ref=lookup) -> float: 
+    def point_to_point_time(start_point, end_point) -> float: 
         """query the dataframe to find the time between two points 
         
         note
         - to be replaced later with pred that does lookup on a model
         """
-        for row in ref: 
-            if row[0] == start_point and row[1] == end_point: 
-                return row[2]
+        # build a df distance,hour,weekday,source_destination,google_duration
+        df = pd.DataFrame(columns=['distance', 'hour', 'weekday', 'source_destination', 'google_duration'])
+        dist = distance(start_point[0], start_point[1], end_point[0], end_point[1])
+        duration = get_google_duration(start_point[0], start_point[1], end_point[0], end_point[1])
+        # duration = 356.51 * dist + 35.303
+        # add one row
+        df = df.append({'distance': dist, 'hour': 10, 'weekday': True, 'source_destination': f'{start_point[0]},{start_point[1]};{end_point[0]},{end_point[1]}', 'google_duration': duration}, ignore_index=True)
+        
+        
+        df = df.assign(source=df.source_destination.str.split(';').str[0])
+        df = df.assign(destination=df.source_destination.str.split(';').str[1])
+        # split source lat long into source_lat and source_long
+        df = df.assign(source_lat=df.source.str.split(',').str[0])
+        df = df.assign(source_long=df.source.str.split(',').str[1])
+        df = df.assign(destination_lat=df.destination.str.split(',').str[0])
+        df = df.assign(destination_long=df.destination.str.split(',').str[1])
+
+        df = df.drop(columns=['source_destination', 'source', 'destination'])
+        
+        # random noise from -2 to 2
+        noise = np.random.uniform(-2, 2)
+        prediction = query_model(df)[0] * 5 + noise
+        print(prediction)
+        return prediction
 
     def tsp_fitness(individual):
         # Calculate the total travel time for the TSP path
+        # make correct df first
+        
+        # set weekday column to all True
         fitness = 0
         for i in range(num_locations):
             location1 = locations[individual[i]]
@@ -158,7 +226,7 @@ def get_best_sequence(individual, locations):
     ordered_locations.append(locations[individual[0]])
     return ordered_locations
 
-# Plotting 
+# Plotting  f
 def plot_evolution(logbook):
 
     # Get the fitness values from the logbook
@@ -187,12 +255,16 @@ def export_csv(location_sequence: list):
 # MAIN 
 
 # Initialize list of locations
-locations, lookup = generate_data(size = 20)
+# locations, lookup = generate_data(size = 20)
+
+# read test.csv
+location_df = get_data()
+print(location_df)
 
 # Run TSP 
-pop, logbook, hof = tsp_solver(locations = locations, 
-                               population_size = 100,
-                               num_generations = 100,
+pop, logbook, hof = tsp_solver(locations = location_df, 
+                               population_size = 10,
+                               num_generations = 40,
                                cxpb = 0.5,
                                mutpb = 0.2
                                )
@@ -201,7 +273,7 @@ pop, logbook, hof = tsp_solver(locations = locations,
 # Get the best individual
 best_individual = hof[0]
 best_fitness = best_individual.fitness.values[0]
-best_sequence = get_best_sequence(best_individual, locations)
+best_sequence = get_best_sequence(best_individual, location_df)
 
 
 # Viz & export 

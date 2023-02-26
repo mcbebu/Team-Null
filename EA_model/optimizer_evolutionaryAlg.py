@@ -24,7 +24,7 @@ for pair in perm:
     lookup.append([pair[0], pair[1], np.sqrt((pair[0][0] - pair[1][0])**2 + (pair[0][1] - pair[1][1])**2)])
     # print(pair[0], pair[1])
 print("Lookup:")
-pprint(lookup)
+print(lookup)
 
 """
 # OLD VERSION; using a dataframe for lookup
@@ -33,10 +33,10 @@ pprint(lookup)
 
 
 # create a dataframe with the pair-wise permutations
-df = pd.DataFrame(perm, columns=['pt_from', 'pt_to'])
+df = pd.DataFrame(perm, columns=[pt_from, pt_to])
 
 # calculate the distance between each pair of points
-df['metric'] = df.apply(lambda row: np.sqrt((row['pt_from'][0] - row['pt_to'][0])**2 + (row['pt_from'][1] - row['pt_to'][1])**2), axis=1)
+df[metric] = df.apply(lambda row: np.sqrt((row[pt_from][0] - row[pt_to][0])**2 + (row[pt_from][1] - row[pt_to][1])**2), axis=1)
 # print(df)
 """
 

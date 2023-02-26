@@ -28,10 +28,10 @@ for pair in perm:
 
 
 # create a dataframe with the pair-wise permutations
-df = pd.DataFrame(perm, columns=['pt_from', 'pt_to'])
+df = pd.DataFrame(perm, columns=[pt_from, pt_to])
 
 # calculate the distance between each pair of points
-df['metric'] = df.apply(lambda row: np.sqrt((row['pt_from'][0] - row['pt_to'][0])**2 + (row['pt_from'][1] - row['pt_to'][1])**2), axis=1)
+df[metric] = df.apply(lambda row: np.sqrt((row[pt_from][0] - row[pt_to][0])**2 + (row[pt_from][1] - row[pt_to][1])**2), axis=1)
 # print(df)
 """
 
@@ -134,7 +134,7 @@ def breed(parent1, parent2):
     # add the first part of the first parent
     child.extend(parent1[:idx])
     
-    # add the second part of the second parent, filling in for values that aren't already there. maintain sequencing
+    # add the second part of the second parent, filling in for values that arent already there. maintain sequencing
     for item in parent2:
         if item not in child:
             child.append(item)
@@ -198,7 +198,7 @@ def evolutionary_solver(
         verbose = False):
     
     fitness_tracker = []
-    best_candidate = (['na'],100000)
+    best_candidate = ([na],100000)
     for i in range(max_generations):
         
         # get the breeders
@@ -229,7 +229,7 @@ def plot_fitness(_best_sequence, _fitness_tracker ):
     plt.plot(_fitness_tracker)
     
     # plot a line for the best score & label it 
-    plt.axhline(y= _best_sequence[1], color='r', linestyle='-')
+    plt.axhline(y= _best_sequence[1], color=r, linestyle=-)
 
     # print the best_sequence score on the graph
     plt.text(0, _best_sequence[1], f"Best Score: {_best_sequence[1]}")
